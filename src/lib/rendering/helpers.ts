@@ -1,10 +1,17 @@
-import { Dimensions } from "@/types";
+import type { Dimensions, Filter } from "@/types";
 
-export const createShader = (
-  gl: WebGLRenderingContext,
-  type: GLenum,
-  source: string
-) => {
+type CreateShaderParams = {
+  gl: WebGLRenderingContext;
+  type: GLenum;
+  source: string;
+};
+
+export const createShader = ({ gl, type, source }: CreateShaderParams) => {
+  const loggableType = type === gl.VERTEX_SHADER ? "VERTEX" : "FRAGMENT";
+  console.log("attempting to create shader", {
+    type: loggableType,
+    source,
+  });
   const shader = gl.createShader(type);
   if (!shader) {
     throw new Error("Shader creation failed");
@@ -17,26 +24,50 @@ export const createShader = (
     return shader;
   }
 
-  gl.deleteShader(shader);
-  throw new Error(`Shader compilation failed: ${gl.getShaderInfoLog(shader)}`);
+  const shaderString = gl.getShaderInfoLog(shader) || source;
+  console.error(`Failed to compile ${loggableType} shader`, {
+    type: loggableType,
+    shaderString,
+  });
+  throw new Error(`Failed to compile ${loggableType} shader: ${shaderString}`);
 };
 
-export const createProgram = (
-  gl: WebGLRenderingContext,
-  vertexShader: WebGLShader,
-  fragmentShader: WebGLShader
-) => {
+type CreateProgramParams = {
+  gl: WebGLRenderingContext;
+  vertexShaderSrc: string;
+  fragmentShaderSrc: string;
+};
+
+export const createProgram = ({
+  gl,
+  vertexShaderSrc,
+  fragmentShaderSrc,
+}: CreateProgramParams) => {
+  const vertexShader = createShader({
+    gl,
+    type: gl.VERTEX_SHADER,
+    source: vertexShaderSrc,
+  });
+  const fragmentShader = createShader({
+    gl,
+    type: gl.FRAGMENT_SHADER,
+    source: fragmentShaderSrc,
+  });
   const program = gl.createProgram();
+
   if (!program) {
-    throw new Error("Program creation failed");
+    throw new Error("Program creation failed. " + gl.getError());
   }
+
   gl.attachShader(program, vertexShader);
   gl.attachShader(program, fragmentShader);
   gl.linkProgram(program);
   const didSucceed = gl.getProgramParameter(program, gl.LINK_STATUS);
+
   if (didSucceed) {
     return program;
   }
+
   gl.deleteProgram(program);
   throw new Error(`Program linking failed: ${gl.getProgramInfoLog(program)}`);
 };
@@ -63,4 +94,10 @@ export const resizeCanvasToDisplaySize = (
     gl.canvas.height = displayHeight;
     gl.viewport(0, 0, displayWidth, displayHeight);
   }
+};
+
+export const computeKernelWeight = (kernel: Filter["kernel"]) => {
+  if (!kernel) throw new Error("Kernel is required");
+  const weight = kernel.reduce((acc, curr) => acc + curr);
+  return weight <= 0 ? 1 : weight;
 };
