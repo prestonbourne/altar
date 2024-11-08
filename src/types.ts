@@ -169,71 +169,38 @@ export type OperationRecord = {
   operation: Operation;
 };
 
-export interface Filter {
-  label:
-    | "Identity"
-    | "Gaussian Blur"
-    | "Sharpen"
-    | "Edge Detection"
-    | "Emboss"
-    | "Saturation";
 
-  kernel?: number[];
-  type: "kernel" | "color";
-  uniforms?: Record<string, number>;
+export type AdjustmentUniform = "u_saturation" | "u_brightness";
+
+export type UniformName = 
+  | AdjustmentUniform
+  | "u_image"
+  | "u_textureSize"
+  | "u_kernel"
+  | "u_kernelWeight"
+  | "u_resolution"
+
+
+
+// Separate types since they have distinct purposes and effects
+export type KernelEffect = {
+  label: string;
+  kernel: number[]; // Convolution matrix for spatial transformations
+  weight?: number; // Optional kernel weight
 }
 
-export const FILTERS: Record<string, Filter> = {
-  identity: {
-    label: "Identity",
-    type: "kernel",
-    kernel: [
-      0, 0, 0,
-      0, 1, 0,
-      0, 0, 0
-    ],
-  },
-  gaussianBlur: {
-    label: "Gaussian Blur",
-    type: "kernel",
-    kernel: [
-      0.045, 0.122, 0.045,
-      0.122, 0.332, 0.122,
-      0.045, 0.122, 0.045
-    ],
-  },
-  sharpen: {
-    label: "Sharpen",
-    type: "kernel",
-    kernel: [
-      0, -1, 0,
-      -1, 5, -1,
-      0, -1, 0,
-    ],
-  },
-  edgeDetection: {
-    label: "Edge Detection",
-    type: "kernel",
-    kernel: [
-      -1, -1, -1,
-      -1,  8, -1,
-      -1, -1, -1,
-    ],
-  },
-  emboss: {
-    label: "Emboss",
-    type: "kernel",
-    kernel: [
-      -2, -1, 0,
-      -1,  1, 1,
-       0,  1, 2,
-    ],
-  },
-  saturation: {
-    label: "Saturation",
-    type: "color",
-    uniforms: {
-      u_saturation: 1.0,
-    },
-  },
+export type ColorAdjustment = {
+  label: string;
+  uniformName: AdjustmentUniform; // Name of the WebGL uniform
+  defaultValue: number;
+  currentValue: number;
+  range: { min: number; max: number }; // Valid range for the adjustment
+}
+
+export type ColorAdjustmentMap = Record<AdjustmentUniform, ColorAdjustment>;
+
+// Keep them separate in usage
+export type ImageEdits = {
+  kernels: Record<string, KernelEffect>; // Spatial effects like blur, sharpen
+  adjustments: ColorAdjustmentMap; // Color modifications like saturation
 };
