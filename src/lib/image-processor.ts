@@ -4,13 +4,15 @@ import {
   resizeCanvasToDisplaySize,
 } from "./webgl";
 import { IDENTITY_KERNEL } from "@/lib/constants";
-import type { ImageEdits, UniformName, Vector2D, Vector3D } from "@/types";
+import type {
+  Dimensions,
+  ImageEdits,
+  UniformName,
+  Vector2D,
+  Vector3D,
+} from "@/types";
 
 type UniformLocations = Record<UniformName, WebGLUniformLocation | null>;
-
-type LoadImageOpts = {
-  position: Vector2D;
-};
 
 type RenderOpts = {
   edits: ImageEdits;
@@ -30,8 +32,9 @@ export class ImageProcessor {
     texCoord: WebGLBuffer | null;
   };
   private texture: WebGLTexture | null;
-  readonly imageScale = 1.2;
+  readonly imageScale = .5;
   #isImageLoaded = false;
+  private imageDimensions: Dimensions;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -48,6 +51,9 @@ export class ImageProcessor {
     this.buffers = this.createBuffers();
     this.uniformLocations = this.getUniformLocations();
     this.texture = null;
+    this.imageDimensions = { width: 0, height: 0 };
+
+    window.addEventListener("resize", this.handleResize);
   }
 
   private createProgram(): WebGLProgram {
@@ -63,6 +69,49 @@ export class ImageProcessor {
   get isImageLoaded() {
     return this.#isImageLoaded;
   }
+
+  private updateImageGeometry() {
+    const { width, height, x, y } = this.calculateImageDimensions();
+    console.log({
+      width,
+      height,
+      x,
+      y,
+    })
+
+    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+    setRectangle(this.gl, x , y , width, height);
+  }
+
+  private handleResize = () => {
+    if (this.#isImageLoaded) {
+      this.updateImageGeometry();
+    }
+  };
+
+  private calculateImageDimensions(): Dimensions & Vector2D {
+  
+    // Use the DPR-scaled canvas width and height
+    const canvasWidth = this.canvas.width ;
+    const canvasHeight = this.canvas.height ;
+  
+    // Desired size based on image scale
+    const desiredWidth = canvasWidth * this.imageScale;
+    const desiredHeight = canvasHeight * this.imageScale;
+  
+    const imageAspectRatio = this.imageDimensions.width / this.imageDimensions.height;
+  
+    // Calculate render width and height based on aspect ratio and scaled dimensions
+    const renderWidth = desiredHeight * imageAspectRatio;
+    const renderHeight = desiredHeight;
+  
+    // Center coordinates for the object, adjusted for DPR
+    const x = (canvasWidth - renderWidth) / 2;
+    const y = (canvasHeight - renderHeight) / 2;
+  
+    return { width: renderWidth, height: renderHeight, x, y };
+  }
+  
 
   private getAttribLocations() {
     return {
@@ -93,16 +142,19 @@ export class ImageProcessor {
     };
   }
 
-  public async loadImage(imageUrl: string, opts: LoadImageOpts): Promise<void> {
+  public async loadImage(imageUrl: string): Promise<void> {
     return new Promise((resolve, reject) => {
       const image = new Image();
       image.src = imageUrl;
       image.crossOrigin = "anonymous";
 
       image.onload = () => {
+        this.imageDimensions = {
+          width: image.width,
+          height: image.height,
+        };
         this.setupTexture(image);
-        this.setupGeometry(image, opts);
-        console.log("successfully loaded image", image);
+        this.setupGeometry(image);
         this.#isImageLoaded = true;
         resolve();
       };
@@ -161,14 +213,15 @@ export class ImageProcessor {
     );
   }
 
-  private setupGeometry(image: HTMLImageElement, opts: LoadImageOpts) {
+  private setupGeometry(image: HTMLImageElement) {
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
+    const { x, y, width, height } = this.calculateImageDimensions();
     setRectangle(
       this.gl,
-      opts.position.x,
-      opts.position.y,
-      image.width * this.imageScale,
-      image.height * this.imageScale
+      x,
+      y,
+      width,
+      height
     );
 
     this.gl.vertexAttribPointer(
@@ -184,7 +237,6 @@ export class ImageProcessor {
 
   public render(opts: RenderOpts) {
     if (!this.#isImageLoaded) return;
-    console.log("render");
 
     resizeCanvasToDisplaySize(this.gl.canvas as HTMLCanvasElement);
 

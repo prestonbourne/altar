@@ -52,12 +52,7 @@ function App() {
         );
         imgProcessorRef.current = imgProcessor;
 
-        imgProcessor.loadImage(
-          DIVER_IMG,
-          {
-            position: { x: 650, y: 300 },
-          }
-        );
+        imgProcessor.loadImage(DIVER_IMG);
       } else {
         imgProcessor = imgProcessorRef.current;
       }

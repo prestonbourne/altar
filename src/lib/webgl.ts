@@ -114,6 +114,7 @@ export function setRectangle(
     gl.STATIC_DRAW
   );
 }
+
 export const getCenterPos = (itemDimensions: Dimensions): Vector2D => {
   return {
     x: (WORKSPACE_DIMENSIONS.width - itemDimensions.width) / 2,
