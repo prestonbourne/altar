@@ -41,7 +41,7 @@ export class ImageProcessor {
     private vertexShaderSource: string,
     private fragmentShaderSource: string
   ) {
-    const gl = canvas.getContext("webgl");
+    const gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
     if (!gl) throw new Error("WebGL not supported");
     this.gl = gl;
 
