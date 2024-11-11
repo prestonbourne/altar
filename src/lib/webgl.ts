@@ -74,21 +74,18 @@ export const createProgram = ({
  * Resize a canvas to match the size its displayed.
  * @param {number} [multiplier] amount to multiply by.
  *    Pass in window.devicePixelRatio for native pixels.
- * @return {boolean} true if the canvas was resized.
  */
 export const resizeCanvasToDisplaySize = (
-  canvas: HTMLCanvasElement,
+  gl: WebGLRenderingContext, 
   multiplier?: number
 ) => {
   multiplier = multiplier || 1;
+  const canvas = gl.canvas as HTMLCanvasElement;
   const width = (canvas.clientWidth * multiplier) | 0;
   const height = (canvas.clientHeight * multiplier) | 0;
-  if (canvas.width !== width || canvas.height !== height) {
-    canvas.width = width;
-    canvas.height = height;
-    return true;
-  }
-  return false;
+  canvas.width = width;
+  canvas.height = height;
+  gl.viewport(0, 0, width, height);
 };
 
 export function setRectangle(

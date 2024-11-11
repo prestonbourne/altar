@@ -1,50 +1,96 @@
 precision mediump float;
 
+// Input image texture to be processed
 uniform sampler2D u_image;
-uniform float u_kernel[9];
-uniform float u_kernelWeight;
-uniform vec2 u_textureSize;
-uniform float u_grayscale;
+
+// Brightness control: values >1.0 increase brightness, values <1.0 decrease it
+uniform float u_brightness;
+
+// Saturation control: adjusts the color vibrancy
 uniform float u_saturation;
 
+// Texture coordinate for the fragment being processed
 varying vec2 v_texCoord;
 
-vec4 applyKernel() {
-    vec2 onePixel = vec2(1.0, 1.0) / u_textureSize;
-    vec4 colorSum = vec4(0.0);
+// Values from 0.0 to 1.0 represent 0° to 360° rotation on the color wheel
+uniform float u_hue;
 
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(-1, -1)) * u_kernel[0];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(0, -1)) * u_kernel[1];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(1, -1)) * u_kernel[2];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(-1, 0)) * u_kernel[3];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(0, 0)) * u_kernel[4];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(1, 0)) * u_kernel[5];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(-1, 1)) * u_kernel[6];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(0, 1)) * u_kernel[7];
-    colorSum += texture2D(u_image, v_texCoord + onePixel * vec2(1, 1)) * u_kernel[8];
 
-    return colorSum / u_kernelWeight;
+vec3 rgbToHsv(vec3 color) {
+    float maxC = max(color.r, max(color.g, color.b));
+    float minC = min(color.r, min(color.g, color.b));
+    float delta = maxC - minC;
+
+    float h = 0.0;
+    if (delta != 0.0) {
+        if (maxC == color.r) {
+            h = mod((color.g - color.b) / delta, 6.0);
+        } else if (maxC == color.g) {
+            h = (color.b - color.r) / delta + 2.0;
+        } else {
+            h = (color.r - color.g) / delta + 4.0;
+        }
+        h /= 6.0;
+    }
+
+    float s = maxC == 0.0 ? 0.0 : delta / maxC;
+    float v = maxC;
+    return vec3(h, s, v);
 }
 
+vec3 hsvToRgb(vec3 hsv) {
+    float h = hsv.x * 6.0;
+    float s = hsv.y;
+    float v = hsv.z;
+
+    float c = v * s;
+    float x = c * (1.0 - abs(mod(h, 2.0) - 1.0));
+    float m = v - c;
+
+    vec3 color;
+    if (0.0 <= h && h < 1.0) {
+        color = vec3(c, x, 0.0);
+    } else if (1.0 <= h && h < 2.0) {
+        color = vec3(x, c, 0.0);
+    } else if (2.0 <= h && h < 3.0) {
+        color = vec3(0.0, c, x);
+    } else if (3.0 <= h && h < 4.0) {
+        color = vec3(0.0, x, c);
+    } else if (4.0 <= h && h < 5.0) {
+        color = vec3(x, 0.0, c);
+    } else {
+        color = vec3(c, 0.0, x);
+    }
+    return color + m;
+}
+
+
 vec4 applyColorEffects(vec4 color) {
-    vec3 originalColor = color.rgb;
+    // **Step 1: Brightness Adjustment**
+    // Scale the original RGB color by the brightness factor.
+    vec3 brightnessAdjusted = color.rgb * clamp(u_brightness, 0.0, 2.0);
 
-    // Convert to grayscale if needed
-    vec3 weights = vec3(0.299, 0.587, 0.114); // Standard grayscale weights
-    float luminance = dot(originalColor, weights);
-    vec3 grayscaleColor = vec3(luminance);
+    // **Step 2: Saturation Adjustment**
+    // Calculate luminance using standard grayscale weights to represent brightness in grayscale
+    vec3 weights = vec3(0.299, 0.587, 0.114);
+    float luminance = dot(brightnessAdjusted, weights);
 
-    // Mix between original and grayscale based on intensity
-    vec3 mixedColor = mix(originalColor, grayscaleColor, clamp(u_grayscale, 0.0, 1.0));
+    // Blend between the grayscale luminance and the brightness-adjusted color based on the saturation level
+    vec3 saturated = mix(vec3(luminance), brightnessAdjusted, clamp(u_saturation, 0.0, 5.0));
 
-    // Apply saturation
-    float satLuminance = dot(mixedColor, weights);
-    vec3 saturated = mix(vec3(satLuminance), mixedColor, clamp(u_saturation, 0.0, 5.0));
+    // Step 3: Hue Adjustment
+    // Convert the color to HSV, modify the hue, and convert it back to RGB
+    vec3 hsvColor = rgbToHsv(saturated);
+    hsvColor.x = mod(hsvColor.x + u_hue, 1.0); // Rotate hue, keeping it in [0, 1] range
+    vec3 finalColor = hsvToRgb(hsvColor);
 
-    return vec4(saturated, color.a);
+    // Return the color with adjusted brightness and saturation, preserving the original alpha
+    return vec4(finalColor, color.a);
 }
 
 void main() {
-    vec4 kernelColor = applyKernel();
-    gl_FragColor = applyColorEffects(kernelColor);
+    // Sample the color at the current texture coordinate
+    vec4 baseColor = texture2D(u_image, v_texCoord);
+
+    gl_FragColor = applyColorEffects(baseColor);
 }

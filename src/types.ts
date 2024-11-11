@@ -170,7 +170,7 @@ export type OperationRecord = {
 };
 
 
-export type AdjustmentUniform = "u_saturation" | "u_brightness";
+export type AdjustmentUniform = "u_saturation" | "u_brightness" | "u_hue";
 
 export type UniformName = 
   | AdjustmentUniform
@@ -192,7 +192,6 @@ export type KernelEffect = {
 export type ColorAdjustment = {
   label: string;
   uniformName: AdjustmentUniform; // Name of the WebGL uniform
-  defaultValue: number;
   currentValue: number;
   range: { min: number; max: number }; // Valid range for the adjustment
 }

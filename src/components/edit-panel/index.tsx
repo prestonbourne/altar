@@ -7,20 +7,27 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-} from '@/components/ui/sidebar';
-import { Slider } from '@/components/ui/slider';
-import { ChevronDown, X } from 'lucide-react';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import type { AdjustmentUniform, ColorAdjustment, ColorAdjustmentMap } from '@/types'
-
+} from "@/components/ui/sidebar";
+import { Slider } from "@/components/ui/slider";
+import { ChevronDown, X } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import type {
+  AdjustmentUniform,
+  ColorAdjustment,
+  ColorAdjustmentMap,
+} from "@/types";
 
 // AdjustmentSlider component
-const AdjustmentSlider = ({ 
-  value, 
+const AdjustmentSlider = ({
+  value,
   onChange,
   min = 0,
   max = 1,
-}: { 
+}: {
   value: number;
   onChange: (value: number) => void;
   min?: number;
@@ -68,7 +75,7 @@ const AdjustmentItem = ({
 
 interface AdjustmentSectionProps {
   title: string;
-  type: 'kernel' | 'color';
+  type: "kernel" | "color";
   adjustments: ColorAdjustmentMap;
   onAdjustmentChange: (uniformName: AdjustmentUniform, value: number) => void;
 }
@@ -80,8 +87,9 @@ const AdjustmentSection = ({
   adjustments,
   onAdjustmentChange,
 }: AdjustmentSectionProps) => {
-  const sectionAdjustments = Object.entries(adjustments).filter(([uniformName]) => 
-    uniformName.startsWith(type === 'kernel' ? 'u_kernel' : 'u_')
+  const sectionAdjustments = Object.entries(adjustments).filter(
+    ([uniformName]) =>
+      uniformName.startsWith(type === "kernel" ? "u_kernel" : "u_")
   );
 
   return (
@@ -93,8 +101,11 @@ const AdjustmentSection = ({
             <SidebarMenuItem key={uniformName}>
               <AdjustmentItem
                 adjustment={adjustment}
-                value={adjustment.defaultValue}
-                onChange={(value) => onAdjustmentChange(adjustment.uniformName, value)}
+                value={adjustment.currentValue}
+                onChange={(value) => {
+                  console.log({ adjustment });
+                  onAdjustmentChange(adjustment.uniformName, value);
+                }}
               />
             </SidebarMenuItem>
           ))}
@@ -118,18 +129,18 @@ export const EditPanel = ({
     <Sidebar variant="floating" className="w-64">
       <SidebarContent>
         <AdjustmentSection
-          title="FX"
-          type="kernel"
+          title="Adjustments"
+          type="color"
           adjustments={adjustments}
           onAdjustmentChange={onAdjustmentChange}
         />
         <AdjustmentSection
-          title="Adjustments" 
-          type="color"
+          title="FX"
+          type="kernel"
           adjustments={adjustments}
           onAdjustmentChange={onAdjustmentChange}
         />
       </SidebarContent>
     </Sidebar>
   );
-}
+};

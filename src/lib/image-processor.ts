@@ -32,7 +32,7 @@ export class ImageProcessor {
     texCoord: WebGLBuffer | null;
   };
   private texture: WebGLTexture | null;
-  readonly imageScale = .5;
+  readonly imageScale = 0.2;
   #isImageLoaded = false;
   private imageDimensions: Dimensions;
 
@@ -70,48 +70,49 @@ export class ImageProcessor {
     return this.#isImageLoaded;
   }
 
-  private updateImageGeometry() {
+  updateImageGeometry() {
     const { width, height, x, y } = this.calculateImageDimensions();
-    console.log({
-      width,
-      height,
-      x,
-      y,
-    })
 
     this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-    setRectangle(this.gl, x , y , width, height);
+    setRectangle(this.gl, x, y, width, height);
   }
 
-  private handleResize = () => {
-    if (this.#isImageLoaded) {
-      this.updateImageGeometry();
-    }
+  handleResize = () => {
+    resizeCanvasToDisplaySize(this.gl, window.devicePixelRatio);
+    this.updateImageGeometry();
   };
 
-  private calculateImageDimensions(): Dimensions & Vector2D {
-  
-    // Use the DPR-scaled canvas width and height
-    const canvasWidth = this.canvas.width ;
-    const canvasHeight = this.canvas.height ;
-  
-    // Desired size based on image scale
-    const desiredWidth = canvasWidth * this.imageScale;
-    const desiredHeight = canvasHeight * this.imageScale;
-  
-    const imageAspectRatio = this.imageDimensions.width / this.imageDimensions.height;
-  
-    // Calculate render width and height based on aspect ratio and scaled dimensions
-    const renderWidth = desiredHeight * imageAspectRatio;
-    const renderHeight = desiredHeight;
-  
-    // Center coordinates for the object, adjusted for DPR
-    const x = (canvasWidth - renderWidth) / 2;
-    const y = (canvasHeight - renderHeight) / 2;
-  
-    return { width: renderWidth, height: renderHeight, x, y };
+  calculateImageDimensions(): Dimensions & Vector2D {
+    const dpr = window.devicePixelRatio || 1;
+    // Use the actual canvas dimensions (already scaled by DPR)
+    const canvasWidth = this.canvas.width;
+    const canvasHeight = this.canvas.height;
+    const canvasArea = canvasWidth * canvasHeight;
+
+    const imgTargetArea = canvasArea * this.imageScale;
+    const imgAspectRatio =
+      this.imageDimensions.width / this.imageDimensions.height;
+
+    /*
+     first solve for image height
+     if width = aspectRatio * height
+     then height = width / aspectRatio
+     we don't know width yet since we want it to be a percentage of the canvas
+    we can substitute width = aspectRatio * height into the area equation
+    aspectRatio * height * height = targetArea
+    height^2 = targetArea / aspectRatio
+    height = sqrt(targetArea / aspectRatio)
+    */
+    const imgHeight = Math.sqrt(imgTargetArea / imgAspectRatio);
+    const imgWidth = imgHeight * imgAspectRatio;
+
+    // Position at right edge, vertically centered
+    // Since canvas dimensions are in DPR-scaled pixels, we need to account for that
+    const x = (canvasWidth - imgWidth) / 2;
+    const y = (canvasHeight - imgHeight) / 2;
+
+    return { width: imgWidth, height: imgHeight, x, y };
   }
-  
 
   private getAttribLocations() {
     return {
@@ -132,6 +133,7 @@ export class ImageProcessor {
       u_saturation: this.gl.getUniformLocation(this.program, "u_saturation"),
       u_resolution: this.gl.getUniformLocation(this.program, "u_resolution"),
       u_brightness: this.gl.getUniformLocation(this.program, "u_brightness"),
+      u_hue: this.gl.getUniformLocation(this.program, "u_hue"),
     };
   }
 
@@ -153,13 +155,14 @@ export class ImageProcessor {
           width: image.width,
           height: image.height,
         };
+
+        this.setupGeometry();
         this.setupTexture(image);
-        this.setupGeometry(image);
         this.#isImageLoaded = true;
         resolve();
       };
 
-      image.onerror = () => reject(new Error("Failed to load image"));
+      image.onerror = (e) => reject(new Error("Failed to load image", { cause: e }));
     });
   }
 
@@ -213,16 +216,9 @@ export class ImageProcessor {
     );
   }
 
-  private setupGeometry(image: HTMLImageElement) {
-    this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.buffers.position);
-    const { x, y, width, height } = this.calculateImageDimensions();
-    setRectangle(
-      this.gl,
-      x,
-      y,
-      width,
-      height
-    );
+  private setupGeometry() {
+    resizeCanvasToDisplaySize(this.gl, window.devicePixelRatio);
+    this.updateImageGeometry();
 
     this.gl.vertexAttribPointer(
       this.attribLocations.position,
@@ -237,8 +233,6 @@ export class ImageProcessor {
 
   public render(opts: RenderOpts) {
     if (!this.#isImageLoaded) return;
-
-    resizeCanvasToDisplaySize(this.gl.canvas as HTMLCanvasElement);
 
     // Clear canvas
     this.gl.clearColor(
@@ -297,7 +291,7 @@ export class ImageProcessor {
     Object.entries(edits.adjustments).forEach(([_, adjustment]) => {
       const uniformLocation = this.uniformLocations[adjustment.uniformName];
       if (uniformLocation) {
-        this.gl.uniform1f(uniformLocation, adjustment.defaultValue);
+        this.gl.uniform1f(uniformLocation, adjustment.currentValue);
       }
     });
   }
