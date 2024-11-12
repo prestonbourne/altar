@@ -9,6 +9,9 @@ import fragmentShader from "@/shaders/img/frag.glsl";
 import { ImageCanvas } from "@/components/image-canvas";
 import { ErrorDisplay } from "@/components/errror";
 import { DEFAULT_EDITS } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import {  GithubIcon } from "lucide-react";
 
 const DIVER_IMG =
   "https://images.unsplash.com/photo-1682687982501-1e58ab814714?w=800&q=1000%27";
@@ -121,6 +124,18 @@ function App() {
         canvasRef={canvasRef}
         imageProcessor={imgProcessorRef.current}
       />
+      <div className="absolute bottom-0 left-0 right-0 p-4 flex justify-center">
+        <Badge>
+          <Link
+            target="_blank"
+            href="https://github.com/prestonbourne/altar"
+            className="flex items-center"
+          >
+            <GithubIcon className="w-4 h-4 mr-2" />
+            Built by Preston
+          </Link>
+        </Badge>
+      </div>
     </SidebarProvider>
   );
 }
