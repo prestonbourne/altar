@@ -66,7 +66,6 @@ export const createProgram = ({
     return program;
   }
 
-  gl.deleteProgram(program);
   throw new Error(`Program linking failed: ${gl.getProgramInfoLog(program)}`);
 };
 

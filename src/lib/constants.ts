@@ -1,7 +1,7 @@
 import type { Dimensions, ImageEdits } from "@/types";
 
 export const APP_NAME = "Altar";
-export const APP_VERSION = "Alpha v0.1.0";
+export const APP_VERSION = "Alpha v0.0.1";
 
 export const WORKSPACE_DIMENSIONS: Dimensions = {
   width: 6000,

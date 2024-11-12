@@ -23,6 +23,7 @@ import type {
   ColorAdjustmentMap,
 } from "@/types";
 import { Button } from "@/components/ui/button";
+import { APP_NAME, APP_VERSION } from "@/lib/constants";
 
 // AdjustmentSlider component
 const AdjustmentSlider = ({
@@ -64,7 +65,7 @@ const AdjustmentItem = ({
       </SidebarMenuButton>
     </CollapsibleTrigger>
     <CollapsibleContent>
-      <div className="p-2">
+      <div className="p-2 my-2">
         <AdjustmentSlider
           value={value}
           onChange={onChange}
@@ -135,13 +136,13 @@ export const EditPanel = ({
   return (
     <Sidebar variant="floating" className="w-64">
       <SidebarHeader>
-        <span className="flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-none ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground h-12 text-sm group-data-[collapsible=icon]:!p-0 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+        <span className="flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-none ring-sidebar-ring transition-[width,height,padding] focus-visible:ring-2 group-has-[[data-sidebar=menu-action]]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:!size-8 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 h-12 text-sm group-data-[collapsible=icon]:!p-0 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
             <GalleryVerticalEnd className="size-4" />
           </div>
           <div className="flex flex-col leading-none">
-            <span className="font-semibold">Altar</span>
-            <span className="text-sm">Early Alpha 0.0.1</span>
+            <span className="font-semibold">{APP_NAME}</span>
+            <span className="text-sm">{APP_VERSION}</span>
           </div>
         </span>
       </SidebarHeader>
