@@ -1,3 +1,29 @@
+# WebGL Image Processing Demo
+
+This application is a image processing tool that leverages WebGL for high-performance photo editing. It performs all image manipulations directly on the GPU using custom GLSL shaders.
+
+This is primarily demo for learning and purposes, for a production application it doesnt make sense to get this low level. I'd reach for a library like Pixi: https://pixijs.com/
+
+## Features
+- Real-time image adjustments using WebGL shaders
+- Non-destructive editing pipeline
+- Core adjustments including:
+  - Brightness and contrast
+  - Exposure and highlights
+  - Color temperature and tint
+  - Saturation and vibrance
+  - Shadows and blacks
+
+## Roadmap
+- Add post processing effects, with framebuffers for each effect
+- Add undo/redo
+- Add layering
+
+## Technical Implementation
+
+All adjustments are processed in linear color space for maximum accuracy and then converted back to sRGB for display.
+You can [see the shaders here](https://github.com/prestonbourne/altar/blob/main/src/shaders/img/frag.glsl).
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

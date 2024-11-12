@@ -24,6 +24,7 @@ import type {
 } from "@/types";
 import { Button } from "@/components/ui/button";
 import { APP_NAME, APP_VERSION } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
 
 // AdjustmentSlider component
 const AdjustmentSlider = ({
@@ -83,7 +84,34 @@ interface AdjustmentSectionProps {
   adjustments: ColorAdjustmentMap;
   onAdjustmentChange: (uniformName: AdjustmentUniform, value: number) => void;
 }
+interface WIPAdjustmentSectionProps {
+  title: string;
+  wipAdjustments: string[];
+}
 
+// AdjustmentSection component
+const WIPAdjustmentSection = ({
+  title,
+  wipAdjustments,
+}: WIPAdjustmentSectionProps) => {
+  return (
+    <SidebarGroup>
+      <SidebarGroupLabel>{title}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {wipAdjustments.map((label) => (
+            <SidebarMenuItem key={label}>
+              <SidebarMenuButton className="w-full flex items-center justify-between" disabled>
+                <span>{label}</span>
+                <Badge variant="positive">Coming Soon</Badge>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
+  );
+};
 // AdjustmentSection component
 const AdjustmentSection = ({
   title,
@@ -153,11 +181,9 @@ export const EditPanel = ({
           adjustments={adjustments}
           onAdjustmentChange={onAdjustmentChange}
         />
-        <AdjustmentSection
+        <WIPAdjustmentSection
           title="FX"
-          type="kernel"
-          adjustments={adjustments}
-          onAdjustmentChange={onAdjustmentChange}
+          wipAdjustments={["Gaussian Blur", "Pixelate"]}
         />
       </SidebarContent>
       <SidebarFooter>
